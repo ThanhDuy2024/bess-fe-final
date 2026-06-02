@@ -313,6 +313,25 @@ const enMessages = {
   saveclose: "Save & Close",
   alarms_title: "Alarms",
   bms_status: "Status",
+  bms_all_status: "All status",
+  bms_status_normal: "Normal",
+  bms_status_high: "High",
+  bms_status_warning: "Warning",
+  bms_status_fault: "Fault",
+  bms_level: "BMS Level",
+  bms_search: "Search rack",
+  bms_max_temp: "Max Temp",
+  bms_max_temp_normal: "Max Temp",
+  bms_min_temp: "Min Temp",
+  bms_rack_list: "Rack List",
+  bms_voltage: "Voltage",
+  bms_current: "Current",
+  bms_temp: "Temperature",
+  bms_cycles: "Cycles",
+  bms_rack_detail: "Rack Detail",
+  bms_max_cell: "Max cell",
+  bms_min_cell: "Min cell",
+  bms_close: "Close"
 };
 
 const viMessages = {
@@ -639,6 +658,25 @@ const viMessages = {
   saveclose: "Lưu & Đóng",
   alarms_title: "Cảnh báo",
   bms_status: "Trạng thái",
+  bms_all_status: "Lọc trạng thái",
+  bms_status_normal: "Bình thường",
+  bms_status_high: "Cao",
+  bms_status_warning: "Cảnh báo",
+  bms_status_fault: "Lỗi",
+  bms_search: "Tìm kiếm rack",
+  bms_level: "Cấp Độ BMS",
+  bms_max_temp: "Nhiệt độ cao nhất",
+  bms_max_temp_normal: "Nhiệt cao nhất",
+  bms_min_temp: "Nhiệt độ thấp nhất",
+  bms_rack_list: "Danh Sách Rack",
+  bms_voltage: "Điện áp",
+  bms_current: "Dòng điện",
+  bms_temp: "Nhiệt độ",
+  bms_cycles: "Chu kỳ",
+  bms_rack_detail: "Thông Tin Rack",
+  bms_max_cell: "Cell tối đa",
+  bms_min_cell: "Cell tối thiểu",
+  bms_close: "Đóng"
 };
 
 export const messages = {
