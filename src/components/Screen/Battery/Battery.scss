@@ -1081,6 +1081,7 @@
           &_Status {
             display: flex;
             gap: 3px;
+            align-items: center;
 
             &_Label {
               font-size: var(--font-size-sm);
@@ -1088,7 +1089,7 @@
             }
 
             &_Value {
-              font-size: var(--font-size-sm);
+              font-size: 10px;
               font-weight: var(--font-weight-semibold);
               color: var(--success-dark);
             }
