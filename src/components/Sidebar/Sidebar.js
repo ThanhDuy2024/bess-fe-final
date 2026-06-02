@@ -1,6 +1,8 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { useIntl } from 'react-intl';
+import React, { useState } from "react";
+import { NavLink } from "react-router-dom";
+import { useIntl } from "react-intl";
+import { isMobile } from "react-device-detect";
+
 import {
   LuBatteryCharging,
   LuBell,
@@ -9,47 +11,89 @@ import {
   LuLayoutDashboard,
   LuSettings,
   LuUsers,
-  LuUserPen
-} from 'react-icons/lu';
-import { useAuth } from '../contexts/AuthContext';
-import './Sidebar.scss';
+  LuGrid2X2,
+} from "react-icons/lu";
 
-const SIDEBAR_CLASS = 'DAT_Sidebar';
-const SIDEBAR_LOGO_CLASS = `${SIDEBAR_CLASS}_Logo`;
-const SIDEBAR_LOGO_IMAGE_CLASS = `${SIDEBAR_LOGO_CLASS}_Image`;
-const SIDEBAR_NAV_CLASS = `${SIDEBAR_CLASS}_Nav`;
-const SIDEBAR_GROUP_CLASS = `${SIDEBAR_NAV_CLASS}_Group`;
-const SIDEBAR_ITEM_CLASS = `${SIDEBAR_GROUP_CLASS}_Item`;
+import { FaUserEdit } from "react-icons/fa";
+import { useAuth } from "../contexts/AuthContext";
+import "./Sidebar.scss";
 
 const menuGroups = [
   {
     labelId: "sidebar_group_overview",
+    mobileLabel: "Tổng quan",
+    mobileIcon: <LuLayoutDashboard />,
+    path: "/dashboard",
     items: [
-      { path: '/dashboard', icon: <LuLayoutDashboard />, labelId: "sidebar_item_dashboard_overview", perm: 'view_dashboard' },
+      {
+        path: "/dashboard",
+        icon: <LuLayoutDashboard />,
+        labelId: "sidebar_item_dashboard_overview",
+        perm: "view_dashboard",
+      },
     ],
   },
   {
     labelId: "sidebar_group_monitoring",
+    mobileLabel: "Giám sát",
+    mobileIcon: <LuCpu />,
     items: [
-      { path: '/pcs', icon: <LuCpu />, labelId: "sidebar_item_pcs_detail", perm: 'view_pcs' },
-      { path: '/battery', icon: <LuBatteryCharging />, labelId: "sidebar_item_battery_detail", perm: 'view_battery' },
+      {
+        path: "/pcs",
+        icon: <LuCpu />,
+        labelId: "sidebar_item_pcs_detail",
+        perm: "view_pcs",
+      },
+      {
+        path: "/battery",
+        icon: <LuBatteryCharging />,
+        labelId: "sidebar_item_battery_detail",
+        perm: "view_battery",
+      },
     ],
   },
   {
     labelId: "sidebar_group_operation",
+    mobileLabel: "Báo cáo",
+    mobileIcon: <LuChartNoAxesCombined />,
     items: [
-      { path: '/energy-report', icon: <LuChartNoAxesCombined />, labelId: "sidebar_item_energy_report", perm: 'view_report' },
-      { path: '/alarms', icon: <LuBell />, labelId: "sidebar_item_alarm_management", perm: 'view_alarm' },
+      {
+        path: "/energy-report",
+        icon: <LuChartNoAxesCombined />,
+        labelId: "sidebar_item_energy_report",
+        perm: "view_report",
+      },
+      {
+        path: "/alarms",
+        icon: <LuBell />,
+        labelId: "sidebar_item_alarm_management",
+        perm: "view_alarm",
+      },
     ],
   },
   {
     labelId: "sidebar_group_management",
+    mobileLabel: "Quản lý",
+    mobileIcon: <LuSettings />,
     items: [
-      { path: '/users', icon: <LuUsers />, labelId: "sidebar_item_user_management", perm: 'manage_users' },
-      { path: '/settings', icon: <LuSettings />, labelId: "sidebar_item_system_settings", perm: 'system_settings' },
-      // { path: '/roles', icon: <RiFolderSettingsFill />, labelId: "sidebar_item_role_management", perm: 'manage_roles' },
-      { path: '/user-info', icon: <LuUserPen />, labelId: "sidebar_item_user_info", perm: 'view_user_info' }
-
+      {
+        path: "/users",
+        icon: <LuUsers />,
+        labelId: "sidebar_item_user_management",
+        perm: "manage_users",
+      },
+      {
+        path: "/settings",
+        icon: <LuSettings />,
+        labelId: "sidebar_item_system_settings",
+        perm: "system_settings",
+      },
+      {
+        path: "/user-info",
+        icon: <FaUserEdit />,
+        labelId: "sidebar_item_user_info",
+        perm: "view_user_info",
+      },
     ],
   },
 ];
@@ -57,38 +101,146 @@ const menuGroups = [
 export default function Sidebar({ collapsed, onToggle }) {
   const lang = useIntl();
   const { hasPermission } = useAuth();
+  const [activeMobileGroup, setActiveMobileGroup] = useState(null);
+
+  if (isMobile) {
+    return (
+      <>
+        {activeMobileGroup !== null && (
+          <div
+            className="DAT_SidebarMobile_Backdrop"
+            onClick={() => setActiveMobileGroup(null)}
+          />
+        )}
+
+        <div className="DAT_SidebarMobile">
+          {menuGroups.map((group, index) => {
+            const visibleItems = group.items.filter((item) =>
+              hasPermission(item.perm),
+            );
+            const hasSingleItem = visibleItems.length === 1;
+
+            if (visibleItems.length === 0) return null;
+
+            return (
+              <div key={group.labelId} className="DAT_SidebarMobile_Group">
+                {!hasSingleItem && activeMobileGroup === index && (
+                  <div className="DAT_SidebarMobile_Group_Popup">
+                    {visibleItems.map((item) => (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        className={({ isActive }) =>
+                          isActive
+                            ? "DAT_SidebarMobile_Group_Popup_Item_Active"
+                            : "DAT_SidebarMobile_Group_Popup_Item"
+                        }
+                        onClick={() => setActiveMobileGroup(null)}
+                      >
+                        <span className="DAT_SidebarMobile_Group_Popup_Item_Icon">
+                          {item.icon}
+                        </span>
+
+                        <span className="DAT_SidebarMobile_Group_Popup_Item_Label">
+                          {lang.formatMessage({ id: item.labelId })}
+                        </span>
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+
+                {hasSingleItem ? (
+                  <NavLink
+                    to={visibleItems[0].path}
+                    className={({ isActive }) =>
+                      isActive
+                        ? "DAT_SidebarMobile_Group_Button_Active"
+                        : "DAT_SidebarMobile_Group_Button"
+                    }
+                    onClick={() => setActiveMobileGroup(null)}
+                  >
+                    <span className="DAT_SidebarMobile_Group_Button_Icon">
+                      {group.mobileIcon}
+                    </span>
+
+                    <span className="DAT_SidebarMobile_Group_Button_Label">
+                      {group.mobileLabel}
+                    </span>
+                  </NavLink>
+                ) : (
+                  <button
+                    type="button"
+                    className={
+                      activeMobileGroup === index
+                        ? "DAT_SidebarMobile_Group_Button_Active"
+                        : "DAT_SidebarMobile_Group_Button"
+                    }
+                    onClick={() =>
+                      setActiveMobileGroup(
+                        activeMobileGroup === index ? null : index,
+                      )
+                    }
+                  >
+                    <span className="DAT_SidebarMobile_Group_Button_Icon">
+                      {group.mobileIcon}
+                    </span>
+
+                    <span className="DAT_SidebarMobile_Group_Button_Label">
+                      {group.mobileLabel}
+                    </span>
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </>
+    );
+  }
 
   return (
-    <aside className={collapsed ? `${SIDEBAR_CLASS} ${SIDEBAR_CLASS}_Collapsed` : SIDEBAR_CLASS}>
+    <aside
+      className={
+        collapsed
+          ? "DAT_Sidebar DAT_Sidebar_Collapsed"
+          : "DAT_Sidebar"
+      }
+    >
       <div
         className={
           collapsed
-            ? `${SIDEBAR_LOGO_CLASS} ${SIDEBAR_LOGO_CLASS}_Collapsed`
-            : SIDEBAR_LOGO_CLASS
+            ? "DAT_Sidebar_Logo DAT_Sidebar_Logo_Collapsed"
+            : "DAT_Sidebar_Logo"
         }
         onClick={onToggle}
       >
         <img
           className={
             collapsed
-              ? `${SIDEBAR_LOGO_IMAGE_CLASS}_Small`
-              : `${SIDEBAR_LOGO_IMAGE_CLASS}_Large`
+              ? "DAT_Sidebar_Logo_Image_Small"
+              : "DAT_Sidebar_Logo_Image_Large"
           }
           src={collapsed ? "/img/logoNho.png" : "/img/logoTo.png"}
           alt="BESS Monitor"
         />
       </div>
-      <nav className={SIDEBAR_NAV_CLASS}>
+
+      <nav className="DAT_Sidebar_Nav">
         {menuGroups.map((group) => {
-          const visibleItems = group.items.filter((item) => hasPermission(item.perm));
+          const visibleItems = group.items.filter((item) =>
+            hasPermission(item.perm),
+          );
+
           if (visibleItems.length === 0) return null;
+
           return (
-            <div key={group.labelId} className={SIDEBAR_GROUP_CLASS}>
+            <div key={group.labelId} className="DAT_Sidebar_Nav_Group">
               {!collapsed && (
-                <div className={`${SIDEBAR_GROUP_CLASS}_Label`}>
+                <div className="DAT_Sidebar_Nav_Group_Label">
                   {lang.formatMessage({ id: group.labelId })}
                 </div>
               )}
+
               {visibleItems.map((item) => (
                 <NavLink
                   key={item.path}
@@ -96,17 +248,24 @@ export default function Sidebar({ collapsed, onToggle }) {
                   className={({ isActive }) =>
                     collapsed
                       ? isActive
-                        ? `${SIDEBAR_ITEM_CLASS}_Collapsed_Active`
-                        : `${SIDEBAR_ITEM_CLASS}_Collapsed`
+                        ? "DAT_Sidebar_Nav_Group_Item_Collapsed_Active"
+                        : "DAT_Sidebar_Nav_Group_Item_Collapsed"
                       : isActive
-                        ? `${SIDEBAR_ITEM_CLASS}_Active`
-                        : SIDEBAR_ITEM_CLASS
+                        ? "DAT_Sidebar_Nav_Group_Item_Active"
+                        : "DAT_Sidebar_Nav_Group_Item"
                   }
-                  title={collapsed ? lang.formatMessage({ id: item.labelId }) : undefined}
+                  title={
+                    collapsed
+                      ? lang.formatMessage({ id: item.labelId })
+                      : undefined
+                  }
                 >
-                  <span className={`${SIDEBAR_ITEM_CLASS}_Icon`}>{item.icon}</span>
+                  <span className="DAT_Sidebar_Nav_Group_Item_Icon">
+                    {item.icon}
+                  </span>
+
                   {!collapsed && (
-                    <span className={`${SIDEBAR_ITEM_CLASS}_Label`}>
+                    <span className="DAT_Sidebar_Nav_Group_Item_Label">
                       {lang.formatMessage({ id: item.labelId })}
                     </span>
                   )}
