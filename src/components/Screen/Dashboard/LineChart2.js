@@ -70,24 +70,30 @@ const labelLine = signal(["00:00:00", "00:05:00", "00:10:00", "00:15:00", "00:20
   "22:00:00", "22:05:00", "22:10:00", "22:15:00", "22:20:00", "22:25:00", "22:30:00", "22:35:00", "22:40:00", "22:45:00", "22:50:00", "22:55:00",
   "23:00:00", "23:05:00", "23:10:00", "23:15:00", "23:20:00", "23:25:00", "23:30:00", "23:35:00", "23:40:00", "23:45:00", "23:50:00", "23:55:00",
   "23:59:55"]);
-const datasetLine = signal([]);
-
-const labelBar = signal([]);
-const datasetBar = signal([]);
-const maxValue = signal(0);
+const datasetSoC = signal([]);
+const datasetVolt = signal([]);
+const datasetCurr = signal([]);
 
 
 
-const LineChart = (props) => {
+
+const LineChart2 = (props) => {
   useSignals();
   const lang = useIntl();
   const [onzoom, setOnzoom] = useState(false);
   const zoomRef = useRef(null);
 
   const trendModes = [
-    { key: "Date", label: lang.formatMessage({ id: "day" }) },
-    { key: "Month", label: lang.formatMessage({ id: "month" }) },
+    { key: "SoC", label: lang.formatMessage({ id: "dashboard_kpi_soc_short" }) },
+    { key: "Volt", label: lang.formatMessage({ id: "voltage" }) },
+    { key: "Current", label: lang.formatMessage({ id: "current" }) },
   ];
+
+  const temp = {
+    SoC: datasetSoC.value,
+    Volt: datasetVolt.value,
+    Current: datasetCurr.value,
+  }
 
   const [mode, setMode] = useState(trendModes[0].key);
 
@@ -95,8 +101,9 @@ const LineChart = (props) => {
 
   let data_tempLine = {
     labels: labelLine.value,
-    datasets: datasetLine.value
+    datasets: temp[mode]
   };
+
   let optionLine = {
     type: 'line',
     responsive: true,
@@ -188,72 +195,6 @@ const LineChart = (props) => {
     },
   }
 
-  let data_tempBar = {
-    labels: labelBar.value,
-    datasets: datasetBar.value
-  }
-
-  let optionBar = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-
-      x: {
-        grid: {
-          display: false
-        },
-        // stacked: true
-      },
-      y: {
-        max: maxValue.value,
-        border: {
-          dash: [4, 2]
-        },
-        // stacked: true
-      }
-    },
-    plugins: {
-      datalabels: {
-        display: false,
-        color: 'grey',
-        anchor: 'end',
-        align: 'top',
-        // formatter: Math.round,
-        font: {
-          size: 14,
-          weight: 'bold'
-        },
-        formatter: (value, context) => {
-          return Number(parseFloat(value)).toFixed(1).toLocaleString('en-US');
-        },
-      },
-      zoom: {
-        limits: {
-          x: { min: 'original', max: 'original', minRange: 5 },
-          y: { min: 'original', max: 'original', minRange: 5 },
-        },
-        pan: {
-          enabled: onzoom,
-          mode: 'xy',
-          modifierKey: 'ctrl',
-        },
-        zoom: {
-          wheel: {
-            enabled: onzoom,
-            speed: 0.05,
-
-          },
-          pinch: {
-            enabled: onzoom
-          },
-          drag: {
-            enabled: onzoom,
-          },
-          mode: 'xy',
-        }
-      },
-    },
-  }
 
 
   const DailyChart = async (date) => {
@@ -268,21 +209,35 @@ const LineChart = (props) => {
       let chart_ = chart.data.result;
 
 
-      datasetLine.value = [
+      datasetSoC.value = [
         {
-          label: `Sạc (kW)`,
+          label: `SoC (%)`,
           lineTension: 0.3,
-          borderColor: 'rgb(15, 86, 173)',
-          backgroundColor: 'rgb(73, 125, 187)',
+          borderColor: 'rgb(11, 130, 11)',
+          backgroundColor: 'rgb(3, 167, 44)',
           pointRadius: 0,
           borderWidth: 1.5,
           data: []
-        },
+        }
+      ];
+      datasetVolt.value = [
         {
-          label: `Xả (kW)`,
+          label: `Điện áp(V)`,
           lineTension: 0.3,
-          borderColor: 'rgb(255, 205, 68)',
-          backgroundColor: 'rgb(255, 205, 68)',
+          borderColor: 'rgb(255, 0, 0)',
+          backgroundColor: 'rgb(255, 0, 0)',
+          pointRadius: 0,
+          borderWidth: 1.5,
+          data: []
+        }
+      ];
+
+      datasetCurr.value = [
+        {
+          label: `Dòng điện(A)`,
+          lineTension: 0.3,
+          borderColor: 'rgb(0, 191, 255)',
+          backgroundColor: 'rgb(0, 191, 255)',
           pointRadius: 0,
           borderWidth: 1.5,
           data: []
@@ -293,30 +248,50 @@ const LineChart = (props) => {
 
         let idx = chart_.findIndex(i => i[0] === item);
         if (idx === -1) {
-          datasetLine.value[0].data.push(0);
-          datasetLine.value[1].data.push(0);
+          datasetSoC.value[0].data.push(0);
+          datasetVolt.value[0].data.push(0);
+          datasetCurr.value[0].data.push(0);
+
         } else {
-          datasetLine.value[0].data.push(chart_?.[idx]?.[5] || 0);
-          datasetLine.value[1].data.push(chart_?.[idx]?.[6] || 0);
+          datasetSoC.value[0].data.push(chart_?.[idx]?.[1] || 0);
+          datasetVolt.value[0].data.push(chart_?.[idx]?.[3] || 0);
+          datasetCurr.value[0].data.push(chart_?.[idx]?.[4] || 0);
+        
         } // nếu không tìm thấy time tương ứng trong chart thì lấy index (trường hợp này sẽ lấy giá trị 0 cho cả 2 dataset)
       });
     } else {
       console.log("Failed to get chart data");
-      datasetLine.value = [
+      datasetSoC.value = [
         {
-          label: `Sạc (kW)`,
+          label: `SoC (%)`,
           lineTension: 0.3,
-          borderColor: 'rgb(15, 86, 173)',
-          backgroundColor: 'rgb(73, 125, 187)',
+          borderColor: 'rgb(11, 130, 11)',
+          backgroundColor: 'rgb(3, 167, 44)',
           pointRadius: 0,
           borderWidth: 1.5,
           data: []
-        },
+        }
+
+      ];
+
+      datasetVolt.value = [
         {
-          label: `Xả (kW)`,
+          label: `Điện áp(V)`,
           lineTension: 0.3,
-          borderColor: 'rgb(255, 205, 68)',
-          backgroundColor: 'rgb(255, 205, 68)',
+          borderColor: 'rgb(255, 0, 0)',
+          backgroundColor: 'rgb(255, 0, 0)',
+          pointRadius: 0,
+          borderWidth: 1.5,
+          data: []
+        }
+      ];
+
+      datasetCurr.value = [
+        {
+          label: `Dòng điện(A)`,
+          lineTension: 0.3,
+          borderColor: 'rgb(0, 191, 255)',
+          backgroundColor: 'rgb(0, 191, 255)',
           pointRadius: 0,
           borderWidth: 1.5,
           data: []
@@ -324,107 +299,6 @@ const LineChart = (props) => {
       ];
     }
 
-  }
-
-  const MonthlyChart = async (month) => {
-    console.log('month', month);
-    let monthchart = await callApi("post", process.env.REACT_APP_API + "/data/getMonthChart", {
-      deviceid: 'N150FL4L2C072590',
-      code: 'M1',
-      month: moment(month).format('MM/YYYY')
-    });
-    // console.log(chart);
-
-    const [mm, yyyy] = moment(month).format('MM/YYYY').split("/");
-    const daysInMonth = new Date(Number(yyyy), Number(mm), 0).getDate();
-
-    if (monthchart.status === 'true') {
-      // console.log(monthchart.data);
-
-
-      let dataBar = monthchart.data.result.map((item, index) => {
-        // Riêng index 0, các giá trị số đều bằng 0
-        if (index === 0) {
-          return [item[0], 0, 0];
-        }
-
-        // Lấy phần tử liền trước đó
-        const prevItem = monthchart.data.result[index - 1];
-
-        // Tính giá trị: item hiện tại - item trước đó
-        return [
-          item[0],                 // Giữ nguyên ngày tháng
-          item[1] - prevItem[1],   // Giá trị thứ 2 hiện tại - trước đó
-          item[2] - prevItem[2]    // Giá trị thứ 3 hiện tại - trước đó
-        ];
-      });
-
-      const allNumbers = dataBar.flatMap(item => item.slice(1));
-      maxValue.value = Math.max(...allNumbers);
-
-      datasetBar.value = [
-        {
-          label: `Sạc (kWh)`,
-          borderColor: 'rgb(0, 131, 187)',
-          backgroundColor: 'rgb(0, 131, 187)',
-          borderWidth: 1.5,
-          data: [],
-
-        },
-        {
-          label: `Xả (kWh)`,
-          borderColor: 'rgb(255, 205, 68)',
-          backgroundColor: 'rgb(255, 205, 68)',
-          borderWidth: 1.5,
-          data: [],
-
-        }
-      ]
-
-      labelBar.value = [];
-      for (let i = 1; i <= daysInMonth; i++) {
-        labelBar.value = [...labelBar.value, i < 10 ? `${mm}/0${i}/${yyyy}` : `${mm}/${i}/${yyyy}`];
-      }
-
-      labelBar.value.map((item, index) => {
-
-        let idx = dataBar.findIndex(i => i[0] === item);
-        // console.log('idx', idx, 'item', item);
-        if (idx === -1) {
-          datasetBar.value[0].data.push(0);
-          datasetBar.value[1].data.push(0);
-        } else {
-          datasetBar.value[0].data.push(dataBar?.[idx][1] || 0);
-          datasetBar.value[1].data.push(dataBar?.[idx][2] || 0);
-        } // nếu không tìm thấy time tương ứng trong chart thì lấy index (trường hợp này sẽ lấy giá trị 0 cho cả 2 dataset)
-      });
-
-
-    } else {
-      console.log("Failed to get chart data");
-      datasetBar.value = [
-        {
-          label: `Sạc (kWh)`,
-          borderColor: 'rgb(0, 131, 187)',
-          backgroundColor: 'rgb(0, 131, 187)',
-          borderWidth: 1.5,
-          data: [],
-
-        },
-        {
-          label: `Xả (kWh)`,
-          borderColor: 'rgb(255, 205, 68)',
-          backgroundColor: 'rgb(255, 205, 68)',
-          borderWidth: 1.5,
-          data: [],
-
-        }
-      ]
-      labelBar.value = [];
-      for (let i = 1; i <= daysInMonth; i++) {
-        labelBar.value = [...labelBar.value, i < 10 ? `${mm}/0${i}/${yyyy}` : `${mm}/${i}/${yyyy}`];
-      }
-    }
   }
 
   useEffect(() => {
@@ -437,17 +311,17 @@ const LineChart = (props) => {
       <div className="DAT_LineChart_Card_Header">
         <div className="DAT_LineChart_Card_Header_Content">
           <span className="DAT_LineChart_Card_Header_Content_Title">
-            {lang.formatMessage({ id: "titchart1" })}
+            {lang.formatMessage({ id: "titchart2" })}
           </span>
         </div>
         <div className="DAT_LineChart_Card_Header_Controls">
           <input
             id="input"
-            type={mode === 'Date' ? "date" : "month"}
+            type="date"
             className="DAT_LineChart_Card_Header_Controls_DateInput"
             defaultValue={moment().format('YYYY-MM-DD')}
-            max={mode === 'Date' ? moment().format('YYYY-MM-DD') : moment().format('YYYY-MM')}
-            onChange={(e) => { mode === 'Date' ? DailyChart(e.target.value) : MonthlyChart(e.target.value) }}
+            max={moment().format('YYYY-MM-DD')}
+            onChange={(e) => { DailyChart(e.target.value) }}
           />
           <div className="DAT_LineChart_Card_Header_Controls_Switcher">
 
@@ -461,18 +335,6 @@ const LineChart = (props) => {
 
 
                   setMode(item.key)
-                  setTimeout(() => {
-                    let input = document.getElementById("input");
-                    console.log('Date', input.type);
-                    if (input.type === 'date') {
-                      input.value = moment().format('YYYY-MM-DD');
-                      DailyChart(moment().format('YYYY-MM-DD'));
-                    } else {
-                      input.value = moment().format('YYYY-MM');
-                      MonthlyChart(moment().format('YYYY-MM'));
-                    }
-                    // input.defaultValue = moment().format('yyyy-MM-dd');
-                  }, 500);
 
 
                 }}
@@ -484,13 +346,12 @@ const LineChart = (props) => {
         </div>
       </div>
       <div className="DAT_LineChart_Card_Body">
-        {mode === 'Date'
-          ? <Line ref={zoomRef} data={data_tempLine} options={optionLine} />
-          : <Bar ref={zoomRef} data={data_tempBar} options={optionBar} />
-        }
+
+        <Line ref={zoomRef} data={data_tempLine} options={optionLine} />
+
       </div>
     </div>
   );
 };
 
-export default LineChart;
+export default LineChart2;

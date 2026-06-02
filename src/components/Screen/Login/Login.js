@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LuEye, LuEyeOff, LuGlobe, LuLock, LuUser } from "react-icons/lu";
 import { useAuth } from "../../contexts/AuthContext";
-import "./LoginPage.scss";
+import "./Login.scss";
 
-export default function LoginPage() {
+export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const backgroundStyle = {
@@ -68,16 +68,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login" style={backgroundStyle}>
-      <div className="login-overlay"></div>
+    <div className="DAT_Login" style={backgroundStyle}>
+      <div className="DAT_Login_Overlay"></div>
 
-      <div className="login-card">
-        <div className="login-card-inner">
-          <div className="login-header">
+      <div className="DAT_Login_Card">
+        <div className="DAT_Login_Card_Inner">
+          <div className="DAT_Login_Card_Header">
             <h1>Đăng nhập</h1>
             <button
               type="button"
-              className="login-language"
+              className="DAT_Login_Card_Header_Language"
               aria-label="Ngon ngu tieng Viet"
             >
               <LuGlobe />
@@ -85,9 +85,9 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <form className="login-form" onSubmit={handleSubmit}>
-            <div className="login-field">
-              <span className="login-field-icon">
+          <form className="DAT_Login_Card_Form" onSubmit={handleSubmit}>
+            <div className="DAT_Login_Card_Form_Field">
+              <span className="DAT_Login_Card_Form_Field_Icon">
                 <LuUser />
               </span>
               <input
@@ -99,8 +99,8 @@ export default function LoginPage() {
               />
             </div>
 
-            <div className="login-field">
-              <span className="login-field-icon">
+            <div className="DAT_Login_Card_Form_Field">
+              <span className="DAT_Login_Card_Form_Field_Icon">
                 <LuLock />
               </span>
               <input
@@ -111,7 +111,7 @@ export default function LoginPage() {
               />
               <button
                 type="button"
-                className="login-field-action"
+                className="DAT_Login_Card_Form_Field_Action"
                 onClick={() => setShowPassword((prev) => !prev)}
                 aria-label="Hien hoac an mat khau"
               >
@@ -119,7 +119,7 @@ export default function LoginPage() {
               </button>
             </div>
 
-            <label className="login-remember">
+            <label className="DAT_Login_Card_Form_Remember">
               <input
                 type="checkbox"
                 checked={remember}
@@ -128,13 +128,17 @@ export default function LoginPage() {
               <span>Lưu đăng nhập</span>
             </label>
 
-            {error && <div className="login-error">{error}</div>}
+            {error && <div className="DAT_Login_Card_Form_Error">{error}</div>}
 
-            <button type="submit" className="login-submit" disabled={loading}>
+            <button
+              type="submit"
+              className="DAT_Login_Card_Form_Submit"
+              disabled={loading}
+            >
               {loading ? "Dang dang nhap" : "Dang nhap"}
             </button>
 
-            <div className="login-links">
+            <div className="DAT_Login_Card_Form_Links">
               <button type="button" onClick={handleForgotPassword}>
                 Quên mật khẩu
               </button>
@@ -142,7 +146,7 @@ export default function LoginPage() {
 
             <button
               type="button"
-              className="login-demo"
+              className="DAT_Login_Card_Form_Demo"
               onClick={handleDemoLogin}
               disabled={loading}
             >
@@ -152,7 +156,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="login-footer">
+      <div className="DAT_Login_Footer">
         <span>Phiên bản: 1.1</span>
         <span>BESS</span>
       </div>

@@ -53,39 +53,43 @@ const WeatherWidget = () => {
   const weatherLang = lang.locale.startsWith("vi") ? "vi" : "en";
 
   useEffect(() => {
-    fetch(
-      `https://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=${encodeURIComponent(WEATHER_CITY)}&lang=${weatherLang}`,
-    )
-      .then((r) => r.json())
-      .then(setWeather)
-      .catch(() => {});
+
+    (async () => {
+
+
+      const url = `https://api.weatherapi.com/v1/forecast.json?key=${process.env.REACT_APP_WEATHER}&q=${10.924961214727357},${106.62117715081975}&days=7&aqi=no&alerts=no&lang=${weatherLang}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      console.log(data);
+      setWeather(data);
+    })();
+
   }, [weatherLang]);
 
-  const { current, location } = weather;
-  const code = current.condition.code;
-  const isDay = current.is_day === 1;
+  // const { current, location } = weather;
+  // const code = current.condition?.code || 30;
+  // const isDay = current.is_day === 1;
 
   return (
     <div
       className="DAT_Weather_Card"
       data-state="ready"
-      style={{ background: getWeatherBg(code, isDay) }}
+      style={{ background: getWeatherBg(weather?.current?.condition?.code, weather?.current?.is_day) }}
     >
       <div className="DAT_Weather_Card_Orb_1" />
       <div className="DAT_Weather_Card_Orb_2" />
       <div className="DAT_Weather_Card_Top">
         <div className="DAT_Weather_Card_Top_Content">
-          <div className="DAT_Weather_Card_Top_Content_City">{location.name}</div>
-          <div className="DAT_Weather_Card_Top_Content_Condition">{current.condition.text}</div>
+          <div className="DAT_Weather_Card_Top_Content_City">{weather?.location?.name ?? 'HCM'}</div>
+          <div className="DAT_Weather_Card_Top_Content_Condition">{weather?.current?.condition?.text ?? 'Có mây'}</div>
         </div>
         <div className="DAT_Weather_Card_Top_Icon">
-          {getWeatherIcon(code, isDay)}
+          {getWeatherIcon(weather?.current?.condition?.code, weather?.current?.is_day)}
         </div>
       </div>
 
       <div className="DAT_Weather_Card_Temperature">
-        {Math.round(current.temp_c)}
-        <span className="DAT_Weather_Card_Temperature_Unit">{"\u00B0"}C</span>
+        {weather?.current?.temp_c ?? '--'}°C
       </div>
     </div>
   );

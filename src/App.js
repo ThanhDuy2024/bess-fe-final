@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   BrowserRouter,
   Navigate,
@@ -9,16 +9,43 @@ import {
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./components/contexts/AuthContext";
 import MainLayout from "./components/Layout/MainLayout";
-import LoginPage from "./components/Screen/Login/LoginPage";
+import LoginPage from "./components/Screen/Login/Login";
 import DashboardPage from "./components/Screen/Dashboard/Dashboard";
-import BatteryPage from "./components/Screen/Battery/BatteryPage";
-import PCSPage from "./components/Screen/PCS/PCSPage";
-import AlarmPage from "./components/Screen/Alarm/AlarmPage";
-import EnergyReportPage from "./components/Screen/EnergyReport/EnergyReportPage";
-import UserManagementPage from "./components/Screen/UserManagement/UserManagementPage";
-import SystemSettingsPage from "./components/Screen/SystemSettings/SystemSettingsPage";
+import BatteryPage from "./components/Screen/Battery/Battery";
+import PCSPage from "./components/Screen/PCS/PCS";
+import AlarmPage from "./components/Screen/Alarm/Alarm";
+import EnergyReportPage from "./components/Screen/EnergyReport/EnergyReport";
+import UserManagementPage from "./components/Screen/UserManagement/UserManagement";
+import SystemSettingsPage from "./components/Screen/SystemSettings/SystemSettings";
 import RolePage from "./components/Screen/Role/Role";
 import UserInfoPage from "./components/Screen/UserInfo/UserInfo";
+import { io } from "socket.io-client";
+import { signal } from "@preact/signals-react";
+import { callApi } from "./components/Api/Api";
+export const socket = signal(io.connect(process.env.REACT_APP_API));
+
+export function toInt16(raw) {
+  const value = Number(raw) & 0xffff;
+  return value >= 0x8000 ? value - 0x10000 : value;
+}
+
+export const convertToDoublewordAndFloat = (cal, type, scale) => {
+  let word = ["0", "0"];
+
+  word[0] = cal[0];
+  word[1] = cal[1];
+
+  var doubleword = (word[1] << 16) | word[0];
+  var buffer = new ArrayBuffer(4);
+  var intView = new Int32Array(buffer);
+  var floatView = new Float32Array(buffer);
+  intView[0] = doubleword;
+  var float_value = floatView[0];
+
+  return type === "float"
+    ? parseFloat(float_value * (scale || 1)).toFixed(1) || 0
+    : parseFloat(doubleword * (scale || 1)).toFixed(1);
+};
 
 function ProtectedRoute({ permission }) {
   const { isAuthenticated, hasPermission } = useAuth();
@@ -41,6 +68,22 @@ function PublicOnlyRoute({ children }) {
 }
 
 function AppRoutes() {
+  useEffect(() => {
+    (async () => {
+      let data = await callApi(
+        "post",
+        process.env.REACT_APP_APIDEV + "/data/getAllUser",{}
+      );
+      console.log("API Response:"); 
+
+      if (data.status === true) {
+        console.log(data);
+      } else {
+        console.log("Failed to get data");
+      }
+    })();
+  }, []);
+
   return (
     <Routes>
       <Route

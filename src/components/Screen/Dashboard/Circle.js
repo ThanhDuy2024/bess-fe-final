@@ -1,83 +1,96 @@
-import React, { useMemo } from "react";
+import React, { useEffect } from "react";
 import { useIntl } from "react-intl";
-import {
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
-import { mockSystemSummary as sys } from "../../data/mockData";
+import { Bar, Doughnut, Line, Pie } from 'react-chartjs-2';
+import { BarElement, ArcElement, CategoryScale, Chart, Filler, Legend, LinearScale, LineElement, PointElement, scales, Title, Tooltip } from 'chart.js';
+import ChartDataLables from 'chartjs-plugin-datalabels';
+import zoomPlugin from 'chartjs-plugin-zoom';
+import annotationPlugin from 'chartjs-plugin-annotation';
+import { signal } from "@preact/signals-react";
+import { callApi } from "../../Api/Api";
+import moment from "moment-timezone";
+import { useSignals } from "@preact/signals-react/runtime";
+const verticalCrosshairPlugin = {
+  id: 'verticalCrosshair',
 
-const DONUT_COLORS = {
-  grid: "#ef4444",
-  battery: "#22C55E",
+  afterEvent(chart, args) {
+    const { event } = args;
+
+    if (event.type === 'mousemove') {
+      chart.$crosshairX = event.x;
+      chart.draw();
+    }
+
+    if (event.type === 'mouseout') {
+      chart.$crosshairX = null;
+      chart.draw();
+    }
+  },
+
+  afterDraw(chart) {
+    const x = chart.$crosshairX;
+    if (x == null) return;
+
+    const { ctx, chartArea } = chart;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x, chartArea.top);
+    ctx.lineTo(x, chartArea.bottom);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#999';
+    ctx.setLineDash([4, 4]);
+    ctx.stroke();
+    ctx.restore();
+  },
 };
+Chart.register(ArcElement, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ChartDataLables, Title, Tooltip, Filler, Legend, zoomPlugin, annotationPlugin, verticalCrosshairPlugin);
 
-const RADIAN = Math.PI / 180;
-
-const DonutLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-  if (percent < 0.06) return null;
-  const r = innerRadius + (outerRadius - innerRadius) * 0.5;
-  const x = cx + r * Math.cos(-midAngle * RADIAN);
-  const y = cy + r * Math.sin(-midAngle * RADIAN);
-  return (
-    <text
-      x={x}
-      y={y}
-      fill="#fff"
-      textAnchor="middle"
-      dominantBaseline="central"
-      fontSize={11}
-      fontWeight={700}
-    >
-      {`${(percent * 100).toFixed(0)}%`}
-    </text>
-  );
-}
-
-const DonutTooltip = ({ active, payload }) => {
-  if (!active || !payload?.length) return null;
-  const d = payload[0];
-  return (
-    <div className="DAT_Power_Donut_Tooltip">
-      <div style={{ fontWeight: 700, color: d.payload.color }}>{d.name}</div>
-      <div className="DAT_Power_Donut_Tooltip_Value">
-        <div className="DAT_Power_Donut_Tooltip_Value_Val">{d.value}</div>
-        <div className="DAT_Power_Donut_Tooltip_Value_Unit">kW</div>
-      </div>
-    </div>
-  );
-}
+const labelPie = signal([]);
+const datasetPie = signal([]);
+const totalChart = signal(0);
 
 const Circle = () => {
+  useSignals();
   const lang = useIntl();
-  const data = useMemo(
-    () =>
-      [
-        {
-          name: lang.formatMessage({ id: "dashboard_energy_grid" }),
-          value: Math.abs(sys.gridPower),
-          color: DONUT_COLORS.grid,
-        },
-        {
-          name: lang.formatMessage({ id: "dashboard_energy_battery" }),
-          value: Math.abs(sys.batteryPower),
-          color: DONUT_COLORS.battery,
-        },
-      ].filter((d) => d.value > 0),
-    [lang],
-  );
 
-  const total = useMemo(
-    () =>
-      [
-        Math.abs(sys.gridPower),
-        Math.abs(sys.pvPower),
-        Math.abs(sys.batteryPower),
-      ].reduce((sum, value) => sum + value, 0),
-    [],
-  );
+  let data_tempPie = {
+    type: 'doughnut',
+    labels: labelPie.value,
+    datasets: datasetPie.value
+  }
+
+  let optionPie = {
+    maintainAspectRatio: false,
+    plugins: {
+      datalabels: {
+        display: true,
+        type: 'line',
+        color: 'white',
+        font: {
+          size: 18,
+          weight: 'bold'
+        },
+        formatter: (value, context) => {
+          return (value * 100 / (totalChart.value)).toFixed(1) + ' %';
+        },
+      },
+    },
+  }
+
+  useEffect(() => {
+    (async () => {
+      totalChart.value = 10000;
+      labelPie.value = ['Battery', 'Grid'];
+      datasetPie.value = [
+        {
+          backgroundColor: ['rgb(8, 72, 246)', 'rgb(255, 68, 68)'],
+          borderColor: ['rgb(85, 123, 213)', 'rgb(255, 68, 68)'],
+          borderWidth: 1,
+          data: [3111, 6889],
+        }
+      ];
+    })();
+  }, []);
 
   return (
     <div className="DAT_Power_Donut_Card">
@@ -90,51 +103,44 @@ const Circle = () => {
       </div>
 
       <div className="DAT_Power_Donut_Chart_Wrap">
-        <ResponsiveContainer width="100%" height={200}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={52}
-              outerRadius={82}
-              paddingAngle={3}
-              dataKey="value"
-              labelLine={false}
-              label={DonutLabel}
-            >
-              {data.map((entry, index) => (
-                <Cell key={index} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip content={<DonutTooltip />} />
-          </PieChart>
-        </ResponsiveContainer>
+        <Doughnut data={data_tempPie} options={optionPie} />
 
-        <div className="DAT_Power_Donut_Center">
+        {/* <div className="DAT_Power_Donut_Center">
           <div className="DAT_Power_Donut_Center_Value">
-            <div className="DAT_Power_Donut_Center_Value_Val">{total}</div>
+            <div className="DAT_Power_Donut_Center_Value_Val">{10}</div>
           </div>
           <div className="DAT_Power_Donut_Center_Label">
             {lang.formatMessage({ id: "dashboard_donut_total_load" })}
           </div>
-        </div>
+        </div> */}
       </div>
 
       <div className="DAT_Power_Donut_Legend">
-        {data.map((d, index) => (
-          <div className="DAT_Power_Donut_Legend_Item" key={index}>
-            <span
-              className="DAT_Power_Donut_Legend_Item_Dot"
-              style={{ background: d.color }}
-            />
-            <span className="DAT_Power_Donut_Legend_Name">{d.name}</span>
-            <div className="DAT_Power_Donut_Legend_Value">
-              <div className="DAT_Power_Donut_Legend_Value_Val">{d.value}</div>
-              <div className="DAT_Power_Donut_Legend_Value_Unit">kW</div>
-            </div>
+
+        <div className="DAT_Power_Donut_Legend_Item" >
+          <span
+            className="DAT_Power_Donut_Legend_Item_Dot"
+            style={{ background: '#0848F6' }}
+          />
+          <span className="DAT_Power_Donut_Legend_Name">{'Battery'}</span>
+          <div className="DAT_Power_Donut_Legend_Value">
+            <div className="DAT_Power_Donut_Legend_Value_Val">{3111}</div>
+            <div className="DAT_Power_Donut_Legend_Value_Unit">kWh</div>
           </div>
-        ))}
+        </div>
+
+        <div className="DAT_Power_Donut_Legend_Item" >
+          <span
+            className="DAT_Power_Donut_Legend_Item_Dot"
+            style={{ background: '#FF4444' }}
+          />
+          <span className="DAT_Power_Donut_Legend_Name">{'Grid'}</span>
+          <div className="DAT_Power_Donut_Legend_Value">
+            <div className="DAT_Power_Donut_Legend_Value_Val">{6889}</div>
+            <div className="DAT_Power_Donut_Legend_Value_Unit">kWh</div>
+          </div>
+        </div>
+
       </div>
     </div>
   );

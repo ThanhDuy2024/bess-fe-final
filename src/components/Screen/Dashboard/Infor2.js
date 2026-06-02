@@ -1,13 +1,49 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useIntl } from "react-intl";
 import { mockSystemSummary as sys } from "../../data/mockData";
+import { convertToDoublewordAndFloat } from "../../../App";
 
 const formatValue = (value) => {
   return Number(value).toFixed(2).replace(/\.00$/, "");
 };
 
-const Infor2 = () => {
+
+export const formatPower = (value) => {
+  // Kiểm tra tính hợp lệ của đầu vào
+
+  // Dùng Math.abs để xử lý đúng cả trường hợp số âm (nếu có công suất âm)
+  const absValue = Math.abs(value);
+
+  if (absValue < 1000) {
+    return parseFloat(absValue).toFixed(2);
+  } else {
+    const mValue = absValue / 1000;
+    return parseFloat(mValue).toFixed(2);
+  }
+};
+
+export const formatUnit = (value,type) => {
+
+  // Dùng Math.abs để xử lý đúng cả trường hợp số âm (nếu có công suất âm)
+  const absValue = Math.abs(value);
+
+  if (absValue < 1000) {
+    return `k${type}`;
+  } else {
+    const mValue = absValue / 1000;
+    return `M${type}`;
+  }
+};
+
+
+const Infor2 = (props) => {
   const lang = useIntl();
+  const [dataInf, setDataInf] = useState({});
+
+  useEffect(() => {
+    // console.log(props.data);
+    setDataInf(props.data);
+  }, [props.data]);
 
   return (
     <div className="DAT_Infor2">
@@ -22,9 +58,11 @@ const Infor2 = () => {
             </span>
             <div className="DAT_Infor2_Card_Charge_Body_Item_Value">
               <div className="DAT_Infor2_Card_Charge_Body_Item_Value_Val">
-                {formatValue(Math.max(0, -sys.batteryPower))}
+                {formatPower(convertToDoublewordAndFloat([dataInf?.["7015-1"], dataInf?.["7014-1"]], "dw", 0.1) || 0)}
               </div>
-              <div className="DAT_Infor2_Card_Charge_Body_Item_Value_Unit">kW</div>
+              <div className="DAT_Infor2_Card_Charge_Body_Item_Value_Unit">
+                {formatUnit(convertToDoublewordAndFloat([dataInf?.["7015-1"], dataInf?.["7014-1"]], "dw", 0.1) || 0, "Wh")}
+              </div>
             </div>
           </div>
           <div className="DAT_Infor2_Card_Charge_Body_Divider" />
@@ -34,9 +72,11 @@ const Infor2 = () => {
             </span>
             <div className="DAT_Infor2_Card_Charge_Body_Item_Value">
               <div className="DAT_Infor2_Card_Charge_Body_Item_Value_Val">
-                {formatValue(sys.todayCharge)}
+                {formatPower(convertToDoublewordAndFloat([dataInf?.["7019-1"], dataInf?.["7018-1"]], "dw", 1) || 0)}
               </div>
-              <div className="DAT_Infor2_Card_Charge_Body_Item_Value_Unit">kWh</div>
+              <div className="DAT_Infor2_Card_Charge_Body_Item_Value_Unit">
+                {formatUnit(convertToDoublewordAndFloat([dataInf?.["7019-1"], dataInf?.["7018-1"]], "dw", 1) || 0, "Wh")}
+              </div>
             </div>
           </div>
         </div>
@@ -53,9 +93,11 @@ const Infor2 = () => {
             </span>
             <div className="DAT_Infor2_Card_Discharge_Body_Item_Value">
               <div className="DAT_Infor2_Card_Discharge_Body_Item_Value_Val">
-                {formatValue(Math.max(0, sys.batteryPower))}
+                {formatPower(convertToDoublewordAndFloat([dataInf?.["7017-1"], dataInf?.["7016-1"]], "dw", 0.1) || 0)}
               </div>
-              <div className="DAT_Infor2_Card_Discharge_Body_Item_Value_Unit">kW</div>
+              <div className="DAT_Infor2_Card_Discharge_Body_Item_Value_Unit">
+                {formatUnit(convertToDoublewordAndFloat([dataInf?.["7017-1"], dataInf?.["7016-1"]], "dw", 0.1) || 0, "Wh")}
+              </div>
             </div>
           </div>
           <div className="DAT_Infor2_Card_Discharge_Body_Divider" />
@@ -65,9 +107,11 @@ const Infor2 = () => {
             </span>
             <div className="DAT_Infor2_Card_Discharge_Body_Item_Value">
               <div className="DAT_Infor2_Card_Discharge_Body_Item_Value_Val">
-                {formatValue(sys.todayDischarge)}
+                {formatPower(convertToDoublewordAndFloat([dataInf?.["7021-1"], dataInf?.["7020-1"]], "dw", 1) || 0)}
               </div>
-              <div className="DAT_Infor2_Card_Discharge_Body_Item_Value_Unit">kWh</div>
+              <div className="DAT_Infor2_Card_Discharge_Body_Item_Value_Unit">
+                {formatUnit(convertToDoublewordAndFloat([dataInf?.["7021-1"], dataInf?.["7020-1"]], "dw", 1) || 0, "Wh")}
+              </div>
             </div>
           </div>
         </div>

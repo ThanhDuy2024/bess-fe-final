@@ -1,13 +1,13 @@
 .layout {
   display: flex;
-  min-height: 100vh;
+  min-height: 100%;
 
   &-main {
     flex: 1;
     margin-left: var(--sidebar-width);
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    min-height: 100%;
     transition: margin-left var(--transition-slow);
   }
 
@@ -16,6 +16,7 @@
   }
 
   &-content {
+    position: relative;
     flex: 1;
     padding: 24px;
     background: var(--bg-main);

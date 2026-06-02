@@ -26,53 +26,74 @@ export default function Header() {
   };
 
   return (
-    <header className="header">
-      <div className="header-left">
-        <h1 className="header-title">{lang.formatMessage({ id: "bess" })}</h1>
+    <header className="DAT_Header">
+      <div className="DAT_Header_left">
+        <h1 className="DAT_Header_left_title">
+          {lang.formatMessage({ id: "bess" })}
+        </h1>
       </div>
-      <div className="header-right">
-        <button
-          className="header-notification"
-          onClick={() => setShowLanMenu(!showLanMenu)}
-          aria-label={lang.formatMessage({ id: "common_select_language" })}
-        >
-          <FaEarthAsia />
-
+      <div className="DAT_Header_right">
+        <div className="DAT_Header_right_dropdown">
+          <button
+            type="button"
+            className="DAT_Header_right_iconButton"
+            onClick={() => setShowLanMenu(!showLanMenu)}
+            aria-label={lang.formatMessage({ id: "common_select_language" })}
+          >
+            <FaEarthAsia />
+          </button>
           {showLanMenu && (
-            <div className="header-user-menu">
+            <div className="DAT_Header_right_dropdown_menu DAT_Header_right_dropdown_menu_language">
               <div
-                className="header-user-menu-item"
+                className="DAT_Header_right_dropdown_menuItem"
                 onClick={() => handleChangeLanguage("vi")}
               >
                 {lang.formatMessage({ id: "language_vi" })}
               </div>
               <div
-                className="header-user-menu-item"
+                className="DAT_Header_right_dropdown_menuItem"
                 onClick={() => handleChangeLanguage("en")}
               >
                 {lang.formatMessage({ id: "language_en" })}
               </div>
             </div>
           )}
-        </button>
+        </div>
 
         <button
-          className="header-notification"
+          type="button"
+          className="DAT_Header_right_iconButton"
           onClick={() => navigate("/alarms")}
           aria-label={lang.formatMessage({ id: "common_open_alarms" })}
         >
           <LuBell />
-          <span className="header-notification-badge">3</span>
+          <span className="DAT_Header_right_iconButton_badge">3</span>
         </button>
-        <div className="header-user" onClick={() => setShowUserMenu(!showUserMenu)}>
-          <div className="header-avatar">{currentUser?.name?.charAt(0) || "U"}</div>
-          <div className="header-user-info">
-            <span className="header-user-name">{currentUser?.name}</span>
-            <span className="header-user-role">{currentUser?.role}</span>
-          </div>
+
+        <div className="DAT_Header_right_dropdown">
+          <button
+            type="button"
+            className="DAT_Header_right_user"
+            onClick={() => setShowUserMenu(!showUserMenu)}
+          >
+            <div className="DAT_Header_right_user_avatar">
+              {currentUser?.name?.charAt(0) || "U"}
+            </div>
+            <div className="DAT_Header_right_user_info">
+              <span className="DAT_Header_right_user_info_name">
+                {currentUser?.name}
+              </span>
+              <span className="DAT_Header_right_user_info_role">
+                {currentUser?.role}
+              </span>
+            </div>
+          </button>
           {showUserMenu && (
-            <div className="header-user-menu">
-              <div className="header-user-menu-item" onClick={handleLogout}>
+            <div className="DAT_Header_right_dropdown_menu DAT_Header_right_dropdown_menu_user">
+              <div
+                className="DAT_Header_right_dropdown_menuItem"
+                onClick={handleLogout}
+              >
                 <LuLogOut />
                 {lang.formatMessage({ id: "common_logout" })}
               </div>

@@ -71,7 +71,7 @@ function genHourlyData() {
 export const mockHourlyData = genHourlyData();
 
 // --- Battery Containers / Racks / Cells ---
-function genCells(rackId, count = 16) {
+function genCells(rackId, count = 104) {
   const cells = [];
   for (let i = 1; i <= count; i++) {
     const v = +(3.15 + Math.random() * 0.15).toFixed(3);
@@ -84,8 +84,8 @@ function genCells(rackId, count = 16) {
   return cells;
 }
 
-function genRacks(containerId, count = 10) {
-  const statuses = ['Normal', 'Normal', 'Normal', 'Normal', 'Normal', 'Normal', 'Normal', 'Normal', 'Warning', 'Normal'];
+function genRacks(containerId, count = 6) {
+  const statuses = ['Normal', 'Normal', 'Normal', 'Normal', 'Normal', 'Normal', 'Warning', 'Normal'];
   const racks = [];
   for (let i = 1; i <= count; i++) {
     const id = `${containerId}-R${String(i).padStart(2, '0')}`;
@@ -98,6 +98,16 @@ function genRacks(containerId, count = 10) {
     const cells = genCells(id);
     const maxCellV = Math.max(...cells.map((c) => c.voltage));
     const minCellV = Math.min(...cells.map((c) => c.voltage));
+    const module = [
+      "Module 01", 
+      "Module 02", 
+      "Module 03", 
+      "Module 04", 
+      "Module 05", 
+      "Module 06",
+      "Module 07",
+      "Module 08"
+    ]
     racks.push({
       id,
       status: statuses[i - 1],
@@ -112,16 +122,23 @@ function genRacks(containerId, count = 10) {
       minCellV: +minCellV.toFixed(3),
       deltaV: +(maxCellV - minCellV).toFixed(3),
       maxTemp: Math.max(...cells.map((c) => c.temperature)),
+      module: module
     });
   }
   return racks;
 }
 
 export const mockContainers = [
-  { id: 'CTN-01', name: 'Container 1', status: 'Normal', racks: genRacks('CTN-01'), soc: 85.2, soh: 97.8, temperature: 28.5 },
-  { id: 'CTN-02', name: 'Container 2', status: 'Warning', racks: genRacks('CTN-02'), soc: 82.1, soh: 95.2, temperature: 32.0 },
-  { id: 'CTN-03', name: 'Container 3', status: 'Normal', racks: genRacks('CTN-03'), soc: 86.5, soh: 98.1, temperature: 27.0 },
-];
+  { 
+    id: 'CTN-01', 
+    name: 'Container 1', 
+    status: 'Normal', 
+    racks: genRacks('CTN-01'), 
+    soc: 85.2, 
+    soh: 97.8, 
+    temperature: 28.5 
+  },
+]
 
 // --- PCS Fault Codes ---
 export const mockPCSFaults = [
@@ -175,45 +192,108 @@ export const mockAlarms = Array.from({ length: 55 }, (_, i) => {
   };
 });
 
-// --- Energy Report (30 days) ---
-export const mockEnergyReport = Array.from({ length: 30 }, (_, i) => {
-  const d = new Date(2026, 4, 19 - i);
+function energySeed(dateKey, hour = 0, offset = 0) {
+  const base = Number(dateKey.replaceAll("-", "")) + hour * 37 + offset * 101;
+  return (Math.sin(base) + 1) / 2;
+}
+
+function genHourlyEnergyRow(dateKey, hour) {
+  const solarWindow = hour >= 6 && hour <= 18;
+  const solarFactor = solarWindow ? Math.sin(((hour - 6) / 12) * Math.PI) : 0;
+  const charge = Math.round(4 + solarFactor * 8 + energySeed(dateKey, hour, 1) * 3);
+  const discharge = Math.round(3 + (1 - solarFactor * 0.6) * 6 + energySeed(dateKey, hour, 2) * 3);
+  const pv = Math.round(solarFactor * 12 + energySeed(dateKey, hour, 3) * 2);
+  const gridImport = Math.round(2 + (1 - solarFactor) * 5 + energySeed(dateKey, hour, 4) * 3);
+  const gridExport = Math.round(solarFactor * 3 + energySeed(dateKey, hour, 5) * 2);
+  const load = Math.round(6 + energySeed(dateKey, hour, 6) * 5 + (hour >= 18 && hour <= 22 ? 3 : 0));
+  const efficiency = +(91.5 + energySeed(dateKey, hour, 7) * 4).toFixed(1);
+
   return {
-    date: d.toISOString().slice(0, 10),
-    charge: Math.round(150 + Math.random() * 60),
-    discharge: Math.round(130 + Math.random() * 50),
-    pv: Math.round(20 + Math.random() * 20),
-    gridImport: Math.round(80 + Math.random() * 40),
-    gridExport: Math.round(5 + Math.random() * 15),
-    load: Math.round(120 + Math.random() * 50),
-    efficiency: +(92 + Math.random() * 4).toFixed(1),
-    cycles: Math.round(1 + Math.random() * 2),
+    date: dateKey,
+    time: `${String(hour).padStart(2, "0")}:00`,
+    charge,
+    discharge,
+    pv,
+    gridImport,
+    gridExport,
+    load,
+    efficiency,
+    cycles: hour === 23 ? +(0.8 + energySeed(dateKey, hour, 8) * 1.7).toFixed(1) : 0,
+  };
+}
+
+const energyReportDates = Array.from({ length: 30 }, (_, i) => {
+  const d = new Date();
+  d.setDate(d.getDate() - i);
+  return d.toISOString().slice(0, 10);
+});
+
+export const mockEnergyReportHourly = energyReportDates.flatMap((dateKey) =>
+  Array.from({ length: 24 }, (_, hour) => genHourlyEnergyRow(dateKey, hour)),
+);
+
+// --- Energy Report (30 days) ---
+export const mockEnergyReport = energyReportDates.map((dateKey) => {
+  const rows = mockEnergyReportHourly.filter((item) => item.date === dateKey);
+  const total = rows.reduce(
+    (acc, row) => ({
+      charge: acc.charge + row.charge,
+      discharge: acc.discharge + row.discharge,
+      pv: acc.pv + row.pv,
+      gridImport: acc.gridImport + row.gridImport,
+      gridExport: acc.gridExport + row.gridExport,
+      load: acc.load + row.load,
+      efficiency: acc.efficiency + row.efficiency,
+      cycles: acc.cycles + row.cycles,
+    }),
+    {
+      charge: 0,
+      discharge: 0,
+      pv: 0,
+      gridImport: 0,
+      gridExport: 0,
+      load: 0,
+      efficiency: 0,
+      cycles: 0,
+    },
+  );
+
+  return {
+    date: dateKey,
+    charge: total.charge,
+    discharge: total.discharge,
+    pv: total.pv,
+    gridImport: total.gridImport,
+    gridExport: total.gridExport,
+    load: total.load,
+    efficiency: +(total.efficiency / rows.length).toFixed(1),
+    cycles: +total.cycles.toFixed(1),
   };
 });
 
 // --- System Settings ---
 export const mockSystemSettings = {
   site: {
-    siteName: 'BESS Station 01',
+    site_name: 'BESS Station 01',
     location: 'Ho Chi Minh City',
     capacity: 2000,
-    batteryType: 'LFP',
-    commissioningDate: '2024-01-15',
+    battery_type: 'LFP',
+    commissioning_date: '2024-01-15',
     owner: 'Energy Corp',
     operator: 'BESS Operations',
   },
   notification: {
-    emailEnabled: true,
-    emailRecipients: 'admin@bess.com, op@bess.com',
-    telegramEnabled: true,
-    botToken: '***************************',
+    email_enabled: true,
+    email_recipients: 'admin@bess.com, op@bess.com',
+    telegram_enabled: true,
+    bot_token: '***************************',
     chatId: '-100123456789',
-    notifyLevels: { critical: true, fault: true, warning: true, info: false },
+    notify_levels: { critical: true, fault: true, warning: true, info: false },
   },
   realtime: {
-    refreshInterval: 5,
-    chartUpdateInterval: 10,
-    dataRetention: 30,
-    reconnectInterval: 5,
+    refresh_interval: 5,
+    chart_updateInterval: 10,
+    data_retention: 30,
+    reconnect_Interval: 5,
   },
 };
