@@ -331,7 +331,12 @@ const enMessages = {
   bms_rack_detail: "Rack Detail",
   bms_max_cell: "Max cell",
   bms_min_cell: "Min cell",
-  bms_close: "Close"
+  bms_close: "Close",
+  sidebar_group_overview_label: "Overview",
+  sidebar_group_monitoring_label: "Monitoring",
+  sidebar_group_operation_label: "Report",
+  sidebar_group_management_label: "Management"
+
 };
 
 const viMessages = {
@@ -676,7 +681,11 @@ const viMessages = {
   bms_rack_detail: "Thông Tin Rack",
   bms_max_cell: "Cell tối đa",
   bms_min_cell: "Cell tối thiểu",
-  bms_close: "Đóng"
+  bms_close: "Đóng",
+  sidebar_group_overview_label: "Tổng quan",
+  sidebar_group_monitoring_label: "Giám sát",
+  sidebar_group_operation_label: "Báo cáo",
+  sidebar_group_management_label: "Quản lý"
 };
 
 export const messages = {

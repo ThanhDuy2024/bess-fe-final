@@ -21,7 +21,7 @@ import "./Sidebar.scss";
 const menuGroups = [
   {
     labelId: "sidebar_group_overview",
-    mobileLabel: "Tổng quan",
+    mobileLabel: "sidebar_group_overview_label",
     mobileIcon: <LuLayoutDashboard />,
     path: "/dashboard",
     items: [
@@ -35,7 +35,7 @@ const menuGroups = [
   },
   {
     labelId: "sidebar_group_monitoring",
-    mobileLabel: "Giám sát",
+    mobileLabel: "sidebar_group_monitoring_label",
     mobileIcon: <LuCpu />,
     items: [
       {
@@ -54,7 +54,7 @@ const menuGroups = [
   },
   {
     labelId: "sidebar_group_operation",
-    mobileLabel: "Báo cáo",
+    mobileLabel: "sidebar_group_operation_label",
     mobileIcon: <LuChartNoAxesCombined />,
     items: [
       {
@@ -73,7 +73,7 @@ const menuGroups = [
   },
   {
     labelId: "sidebar_group_management",
-    mobileLabel: "Quản lý",
+    mobileLabel: "sidebar_group_management_label",
     mobileIcon: <LuSettings />,
     items: [
       {
@@ -164,7 +164,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                     </span>
 
                     <span className="DAT_SidebarMobile_Group_Button_Label">
-                      {group.mobileLabel}
+                      {lang.formatMessage({id: group.mobileLabel})}
                     </span>
                   </NavLink>
                 ) : (
@@ -186,7 +186,7 @@ export default function Sidebar({ collapsed, onToggle }) {
                     </span>
 
                     <span className="DAT_SidebarMobile_Group_Button_Label">
-                      {group.mobileLabel}
+                      {lang.formatMessage({id: group.mobileLabel})}
                     </span>
                   </button>
                 )}
